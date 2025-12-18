@@ -1,0 +1,22 @@
+{
+  "name": "nav",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker Navigation Site",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute nav_db --file=./schema.sql",
+    "db:init:local": "wrangler d1 execute nav_db --local --file=./schema.sql"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "navigation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-box {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-title {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+        }
+        .login-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .login-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        .login-error.show {
+            display: block;
+        }
+        .back-home {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-home:hover {
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1 class="login-title">Admin Login</h1>
+            <p class="login-subtitle">Please enter your credentials</p>
+
+            <div class="login-error" id="errorMsg"></div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" class="form-input" id="username" name="username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" class="form-input" id="password" name="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary login-btn" id="loginBtn">Login</button>
+            </form>
+
+            <a href="/" class="back-home">Back to Home</a>
+        </div>
+    </div>
+
+    <script src="/js/login.js"></script>
+</body>
+</html>

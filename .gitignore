@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Cloudflare
+.wrangler/
+.dev.vars
+
+# Local database
+.mf/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude instructions (private)
+CLAUDE.md
+**/CLAUDE.md
+
+# Original import data (contains sensitive data)
+import_all.sql
+
+# Logs
+*.log
+npm-debug.log*

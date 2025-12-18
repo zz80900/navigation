@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1 class="header-title">Admin Panel</h1>
+            <a href="/" class="back-link">Back to Home</a>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary btn-sm" id="changePasswordBtn">Change Password</button>
+            <button class="theme-toggle" id="themeToggle">Dark</button>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Sidebar: Category Management + User Management -->
+        <aside class="sidebar">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Categories</h2>
+                    <button class="btn btn-primary btn-sm" id="addCategoryBtn">+ Add</button>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    <ul class="category-list" id="categoryList">
+                        <li class="loading">Loading...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- User Management Panel (Super Admin Only) -->
+            <div class="panel" id="userPanel" style="display: none;">
+                <div class="panel-header">
+                    <h2 class="panel-title">Users</h2>
+                    <button class="btn btn-primary btn-sm" id="addUserBtn">+ Add</button>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    <ul class="user-list" id="userList">
+                        <li class="loading">Loading...</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Panel: Link Management -->
+        <main class="main-panel">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Links</h2>
+                    <button class="btn btn-primary btn-sm" id="addLinkBtn">+ Add Link</button>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    <table class="link-table">
+                        <thead>
+                            <tr>
+                                <th class="link-icon-cell"></th>
+                                <th>Name</th>
+                                <th>URL</th>
+                                <th>Category</th>
+                                <th class="actions-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkTableBody">
+                            <tr><td colspan="5" class="loading">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="categoryModalTitle">Add Category</h3>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId">
+                    <div class="form-group">
+                        <label class="form-label" for="categoryName">Name</label>
+                        <input type="text" class="form-input" id="categoryName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="categorySortOrder">Sort Order</label>
+                        <input type="number" class="form-input" id="categorySortOrder" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close>Cancel</button>
+                <button class="btn btn-primary" id="saveCategoryBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Modal -->
+    <div class="modal-overlay" id="linkModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="linkModalTitle">Add Link</h3>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="linkForm">
+                    <input type="hidden" id="linkId">
+                    <div class="form-group">
+                        <label class="form-label" for="linkCategory">Category</label>
+                        <select class="form-select" id="linkCategory" required>
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="linkName">Name</label>
+                        <input type="text" class="form-input" id="linkName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="linkUrl">URL</label>
+                        <input type="url" class="form-input" id="linkUrl" required placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="linkIcon">Icon URL (optional)</label>
+                        <input type="url" class="form-input" id="linkIcon" placeholder="Leave empty for auto-fetch">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="linkSortOrder">Sort Order</label>
+                        <input type="number" class="form-input" id="linkSortOrder" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close>Cancel</button>
+                <button class="btn btn-primary" id="saveLinkBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal (Super Admin Only) -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="userModalTitle">Add User</h3>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="form-group" id="usernameGroup">
+                        <label class="form-label" for="newUsername">Username</label>
+                        <input type="text" class="form-input" id="newUsername" minlength="3">
+                    </div>
+                    <div class="form-group" id="passwordGroup">
+                        <label class="form-label" for="newUserPassword">Password</label>
+                        <input type="password" class="form-input" id="newUserPassword" minlength="6" placeholder="Min 6 characters">
+                    </div>
+                    <div class="form-group" id="statusGroup" style="display: none;">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="userStatus">
+                            <option value="1">Active</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close>Cancel</button>
+                <button class="btn btn-primary" id="saveUserBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Change Password</h3>
+                <button class="modal-close" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label class="form-label" for="oldPassword">Current Password</label>
+                        <input type="password" class="form-input" id="oldPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newPassword">New Password</label>
+                        <input type="password" class="form-input" id="newPassword" required minlength="6" placeholder="Min 6 characters">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input type="password" class="form-input" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close>Cancel</button>
+                <button class="btn btn-primary" id="savePasswordBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>
