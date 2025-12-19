@@ -8,7 +8,9 @@
 - 超级管理员：user_id=1 为超级管理员，可管理所有用户
 - 用户管理：新增/删除/禁用用户、重置密码
 - 分类管理：创建/编辑/删除分类，支持排序
-- 链接管理：创建/编辑/删除链接，支持自定义图标
+- 链接管理：按分类筛选、15 条分页、拖拽排序，创建/编辑/删除并支持自定义图标
+- 分类管理：支持拖拽重新排序，左侧列表高亮记忆
+- 管理后台体验：左侧分类高亮记忆、行内操作悬浮显示、分页状态与空态提示
 - 主题切换：支持亮色/暗色主题，跟随系统或手动切换
 - 搜索功能：实时搜索链接名称和URL
 - 响应式设计：适配桌面端和移动端
@@ -151,13 +153,15 @@ npx wrangler deploy
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | /api/admin/categories | 获取分类列表 |
+| PUT | /api/admin/categories/reorder | 拖拽调整分类排序 |
 | POST | /api/admin/categories | 创建分类 |
 | PUT | /api/admin/categories/:id | 更新分类 |
 | DELETE | /api/admin/categories/:id | 删除分类 |
-| GET | /api/admin/links | 获取链接列表 |
+| GET | /api/admin/links | 获取链接列表，支持 `category_id`、`page`、`per_page` 查询 |
 | POST | /api/admin/links | 创建链接 |
 | PUT | /api/admin/links/:id | 更新链接 |
 | DELETE | /api/admin/links/:id | 删除链接 |
+| PUT | /api/admin/links/reorder | 按分类拖拽排序并持久化 sort_order |
 | PUT | /api/admin/password | 修改密码 |
 
 ### 用户管理 API（仅超级管理员）

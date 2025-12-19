@@ -11,7 +11,11 @@ let currentUser = null;
 const app = document.getElementById('app');
 const searchInput = document.getElementById('searchInput');
 const themeToggle = document.getElementById('themeToggle');
-const userLink = document.getElementById('userLink');
+const userMenu = document.getElementById('userMenu');
+const userMenuToggle = document.getElementById('userMenuToggle');
+const userMenuDropdown = document.getElementById('userMenuDropdown');
+const userMenuAdminLink = document.getElementById('userMenuAdminLink');
+const userLogoutBtn = document.getElementById('userLogoutBtn');
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -41,7 +45,7 @@ function initTheme() {
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    themeToggle.textContent = theme === 'dark' ? 'Light' : 'Dark';
+    updateThemeToggle(theme);
 }
 
 /**
@@ -50,6 +54,13 @@ function setTheme(theme) {
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme');
     setTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+function updateThemeToggle(theme) {
+    if (!themeToggle) return;
+    const isDark = theme === 'dark';
+    themeToggle.textContent = isDark ? '🌞' : '🌙';
+    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
 }
 
 /**
@@ -72,6 +83,27 @@ function setupEventListeners() {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
         if (!localStorage.getItem('theme')) {
             setTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+
+    if (userMenuToggle) {
+        userMenuToggle.addEventListener('click', handleUserMenuToggleClick);
+    }
+
+    if (userLogoutBtn) {
+        userLogoutBtn.addEventListener('click', logoutUser);
+    }
+
+    if (userMenuAdminLink) {
+        userMenuAdminLink.addEventListener('click', () => {
+            closeUserMenu();
+        });
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!userMenu) return;
+        if (!userMenu.contains(event.target)) {
+            closeUserMenu();
         }
     });
 }
@@ -105,7 +137,7 @@ async function checkAuthAndLoadData() {
         currentUser = authResult.data;
 
         // Update user link to show username
-        updateUserLink();
+        updateUserMenu();
 
         // Load navigation data
         await loadData();
@@ -116,18 +148,49 @@ async function checkAuthAndLoadData() {
 }
 
 /**
- * Update user link to show username or login
+ * Update user menu button and dropdown
  */
-function updateUserLink() {
+function updateUserMenu() {
+    if (!userMenuToggle) return;
+
     if (currentUser) {
-        userLink.textContent = currentUser.username;
-        userLink.href = '/admin.html';
-        userLink.title = 'Go to Admin';
+        userMenuToggle.textContent = currentUser.username;
+        userMenuToggle.classList.add('is-auth');
+        if (userMenu) {
+            userMenu.classList.add('is-auth');
+        }
     } else {
-        userLink.textContent = 'Login';
-        userLink.href = '/login.html';
-        userLink.title = 'Login';
+        userMenuToggle.textContent = 'Login';
+        userMenuToggle.classList.remove('is-auth');
+        if (userMenu) {
+            userMenu.classList.remove('is-auth');
+            userMenu.classList.remove('open');
+        }
     }
+}
+
+function handleUserMenuToggleClick(event) {
+    if (!currentUser) {
+        window.location.href = '/login.html';
+        return;
+    }
+    event.preventDefault();
+    if (userMenu) {
+        userMenu.classList.toggle('open');
+    }
+}
+
+function closeUserMenu() {
+    if (userMenu) {
+        userMenu.classList.remove('open');
+    }
+}
+
+function logoutUser() {
+    localStorage.removeItem('token');
+    currentUser = null;
+    closeUserMenu();
+    showLoginPrompt();
 }
 
 /**
@@ -135,7 +198,7 @@ function updateUserLink() {
  */
 function showLoginPrompt() {
     currentUser = null;
-    updateUserLink();
+    updateUserMenu();
     app.innerHTML = `
         <div class="login-prompt">
             <p>Please login to view your navigation links</p>

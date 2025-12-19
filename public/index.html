@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,8 +14,14 @@
             <input type="text" class="search-input" id="searchInput" placeholder="Search...">
         </div>
         <div class="header-actions">
-            <button class="theme-toggle" id="themeToggle">Dark</button>
-            <a href="/login.html" class="admin-link" id="userLink">Login</a>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme"></button>
+            <div class="user-menu" id="userMenu">
+                <button class="user-menu-toggle" id="userMenuToggle" type="button">Login</button>
+                <div class="user-menu-dropdown" id="userMenuDropdown">
+                    <a href="/admin.html" class="user-menu-item" id="userMenuAdminLink">Go to Admin</a>
+                    <button class="user-menu-item logout" id="userLogoutBtn" type="button">Logout</button>
+                </div>
+            </div>
         </div>
     </header>
 

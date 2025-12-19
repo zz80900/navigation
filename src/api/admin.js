@@ -5,6 +5,9 @@
 import { jsonResponse, errorResponse } from '../utils/response.js';
 import { hashPassword, verifyPassword } from '../utils/crypto.js';
 
+const DEFAULT_LINKS_PER_PAGE = 15;
+const MAX_LINKS_PER_PAGE = 100;
+
 /**
  * Handle admin API requests
  * @param {Request} request
@@ -15,6 +18,7 @@ import { hashPassword, verifyPassword } from '../utils/crypto.js';
  */
 export async function handleAdminAPI(request, env, path, user) {
     const method = request.method;
+    const { searchParams } = new URL(request.url);
 
     // ============ Category Management ============
 
@@ -106,6 +110,70 @@ export async function handleAdminAPI(request, env, path, user) {
         }
     }
 
+    // PUT /api/admin/categories/reorder - Reorder categories for current user
+    if (path === '/api/admin/categories/reorder' && method === 'PUT') {
+        try {
+            const body = await request.json();
+            const { category_id, target_category_id = null, position = 'after' } = body;
+
+            const categoryId = parseInt(category_id, 10);
+            const targetId = target_category_id ? parseInt(target_category_id, 10) : null;
+            const normalizedPosition = position === 'before' ? 'before' : 'after';
+
+            if (!categoryId) {
+                return errorResponse('category_id is required', 400);
+            }
+
+            const listResult = await env.DB.prepare(
+                'SELECT id FROM categories WHERE user_id = ? ORDER BY sort_order ASC, id ASC'
+            ).bind(userId).all();
+
+            const orderedIds = listResult.results.map(row => row.id);
+
+            if (!orderedIds.includes(categoryId)) {
+                return errorResponse('Category not found or access denied', 404);
+            }
+
+            if (orderedIds.length <= 1) {
+                return jsonResponse({ success: true });
+            }
+
+            if (targetId && !orderedIds.includes(targetId)) {
+                return errorResponse('Target category not found or access denied', 404);
+            }
+
+            const originalOrder = [...orderedIds];
+            const currentIndex = orderedIds.indexOf(categoryId);
+            orderedIds.splice(currentIndex, 1);
+
+            let insertIndex = orderedIds.length;
+            if (targetId) {
+                insertIndex = orderedIds.indexOf(targetId);
+                if (normalizedPosition === 'after') {
+                    insertIndex += 1;
+                }
+            }
+
+            orderedIds.splice(insertIndex, 0, categoryId);
+
+            const unchanged = originalOrder.length === orderedIds.length &&
+                originalOrder.every((id, idx) => id === orderedIds[idx]);
+            if (unchanged) {
+                return jsonResponse({ success: true });
+            }
+
+            for (let i = 0; i < orderedIds.length; i += 1) {
+                await env.DB.prepare(
+                    'UPDATE categories SET sort_order = ? WHERE id = ? AND user_id = ?'
+                ).bind(i * 10, orderedIds[i], userId).run();
+            }
+
+            return jsonResponse({ success: true });
+        } catch (e) {
+            return errorResponse('Failed to reorder categories: ' + e.message, 500);
+        }
+    }
+
     // ============ Link Management ============
 
     // POST /api/admin/links - Create link
@@ -143,14 +211,64 @@ export async function handleAdminAPI(request, env, path, user) {
     // GET /api/admin/links - Get user's links
     if (path === '/api/admin/links' && method === 'GET') {
         try {
+            const categoryParam = searchParams.get('category_id');
+            const requestedCategoryId = categoryParam ? parseInt(categoryParam, 10) : null;
+            const hasCategoryFilter = Number.isFinite(requestedCategoryId) && requestedCategoryId > 0;
+
+            const requestedPage = parseInt(searchParams.get('page') || '1', 10);
+            const requestedPerPage = parseInt(searchParams.get('per_page') || String(DEFAULT_LINKS_PER_PAGE), 10);
+
+            const perPage = Math.min(
+                MAX_LINKS_PER_PAGE,
+                Math.max(1, requestedPerPage || DEFAULT_LINKS_PER_PAGE)
+            );
+            let page = Math.max(1, requestedPage || 1);
+
+            let whereClause = 'WHERE l.user_id = ?';
+            const bindings = [userId];
+
+            if (hasCategoryFilter) {
+                whereClause += ' AND l.category_id = ?';
+                bindings.push(requestedCategoryId);
+            }
+
+            const countResult = await env.DB.prepare(
+                `SELECT COUNT(*) as total
+                 FROM links l
+                 ${whereClause}`
+            ).bind(...bindings).first();
+
+            const total = countResult ? countResult.total : 0;
+            const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+            if (page > totalPages) {
+                page = totalPages;
+            }
+
+            const offset = (page - 1) * perPage;
+            const listBindings = [...bindings, perPage, offset];
+
             const result = await env.DB.prepare(
                 `SELECT l.*, c.name as category_name
                  FROM links l
                  JOIN categories c ON l.category_id = c.id
-                 WHERE l.user_id = ?
-                 ORDER BY c.sort_order ASC, l.sort_order ASC`
-            ).bind(userId).all();
-            return jsonResponse({ success: true, data: result.results });
+                 ${whereClause}
+                 ORDER BY c.sort_order ASC, l.sort_order ASC, l.id ASC
+                 LIMIT ? OFFSET ?`
+            ).bind(...listBindings).all();
+
+            return jsonResponse({
+                success: true,
+                data: {
+                    links: result.results,
+                    pagination: {
+                        page,
+                        per_page: perPage,
+                        total,
+                        total_pages: totalPages,
+                    },
+                },
+            });
         } catch (e) {
             return errorResponse('Failed to get links: ' + e.message, 500);
         }
@@ -209,6 +327,75 @@ export async function handleAdminAPI(request, env, path, user) {
             return jsonResponse({ success: true });
         } catch (e) {
             return errorResponse('Failed to delete link: ' + e.message, 500);
+        }
+    }
+
+    // PUT /api/admin/links/reorder - Reorder links inside a category
+    if (path === '/api/admin/links/reorder' && method === 'PUT') {
+        try {
+            const body = await request.json();
+            const { category_id, link_id, target_link_id = null, position = 'after' } = body;
+
+            const categoryId = parseInt(category_id, 10);
+            const linkId = parseInt(link_id, 10);
+            const targetId = target_link_id ? parseInt(target_link_id, 10) : null;
+            const normalizedPosition = position === 'before' ? 'before' : 'after';
+
+            if (!categoryId || !linkId) {
+                return errorResponse('category_id and link_id are required', 400);
+            }
+
+            // Verify category ownership
+            const category = await env.DB.prepare(
+                'SELECT id FROM categories WHERE id = ? AND user_id = ?'
+            ).bind(categoryId, userId).first();
+
+            if (!category) {
+                return errorResponse('Category not found or access denied', 404);
+            }
+
+            const listResult = await env.DB.prepare(
+                `SELECT id FROM links
+                 WHERE user_id = ? AND category_id = ?
+                 ORDER BY sort_order ASC, id ASC`
+            ).bind(userId, categoryId).all();
+
+            const orderedIds = listResult.results.map(row => row.id);
+            const originalOrder = [...orderedIds];
+            const currentIndex = orderedIds.indexOf(linkId);
+
+            if (currentIndex === -1) {
+                return errorResponse('Link not found or access denied', 404);
+            }
+
+            orderedIds.splice(currentIndex, 1);
+
+            let insertIndex = orderedIds.length;
+
+            if (targetId && orderedIds.includes(targetId)) {
+                insertIndex = orderedIds.indexOf(targetId);
+                if (normalizedPosition === 'after') {
+                    insertIndex += 1;
+                }
+            }
+
+            orderedIds.splice(insertIndex, 0, linkId);
+
+            // No change in ordering
+            if (originalOrder.length === orderedIds.length &&
+                originalOrder.every((id, idx) => id === orderedIds[idx])) {
+                return jsonResponse({ success: true });
+            }
+
+            for (let i = 0; i < orderedIds.length; i += 1) {
+                await env.DB.prepare(
+                    'UPDATE links SET sort_order = ? WHERE id = ? AND user_id = ?'
+                ).bind(i * 10, orderedIds[i], userId).run();
+            }
+
+            return jsonResponse({ success: true });
+        } catch (e) {
+            return errorResponse('Failed to reorder links: ' + e.message, 500);
         }
     }
 

@@ -19,6 +19,7 @@
     --shadow-color: rgba(0, 0, 0, 0.1);
     --tooltip-bg: #333333;
     --tooltip-text: #ffffff;
+    --danger-color: #f44336;
 }
 
 [data-theme="dark"] {
@@ -36,6 +37,7 @@
     --shadow-color: rgba(0, 0, 0, 0.3);
     --tooltip-bg: #e0e0e0;
     --tooltip-text: #1a1a2e;
+    --danger-color: #ef5350;
 }
 
 /* Reset and base styles */
@@ -112,17 +114,23 @@ body {
 .theme-toggle {
     background: none;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 6px 12px;
+    border-radius: 999px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
     cursor: pointer;
     color: var(--text-secondary);
-    font-size: 14px;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
 }
 
 .theme-toggle:hover {
-    background-color: var(--bg-card-hover);
     border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.15);
 }
 
 .admin-link {
@@ -137,6 +145,101 @@ body {
 .admin-link:hover {
     background-color: var(--bg-card-hover);
     color: var(--accent-color);
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-menu:not(.is-auth) .user-menu-dropdown {
+    display: none;
+}
+
+.user-menu-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: all 0.2s;
+    min-width: 80px;
+    text-align: center;
+}
+
+.user-menu-toggle.is-auth {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.user-menu-toggle:hover {
+    background-color: var(--bg-card-hover);
+    border-color: var(--accent-color);
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 180px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+    pointer-events: none;
+    z-index: 200;
+}
+
+[data-theme="dark"] .user-menu-dropdown {
+    background-color: rgba(15, 25, 50, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-menu.open .user-menu-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.user-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.user-menu-item:hover {
+    background-color: rgba(33, 150, 243, 0.12);
+    color: var(--accent-color);
+}
+
+.user-menu-item.logout {
+    color: var(--danger-color, #f44336);
+    justify-content: center;
+    font-weight: 600;
+}
+
+.user-menu-item.logout:hover {
+    background-color: rgba(244, 67, 54, 0.12);
+    color: var(--danger-color, #f44336);
 }
 
 /* Main content */
@@ -396,8 +499,8 @@ body {
         font-size: 16px; /* Prevent iOS zoom on focus */
     }
 
-    .theme-toggle,
-    .admin-link {
+    .admin-link,
+    .user-menu-toggle {
         padding: 8px 10px;
         font-size: 13px;
     }

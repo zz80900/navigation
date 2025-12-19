@@ -21,6 +21,8 @@ Thumbs.db
 # Claude instructions (private)
 CLAUDE.md
 **/CLAUDE.md
+AGENTS.md
+**/AGENTS.md
 
 # Original import data (contains sensitive data)
 import_all.sql
