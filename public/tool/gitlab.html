@@ -1720,12 +1720,15 @@
     }
 
     function sortGroupNames(groupNames) {
-        // 自定义分组排序：NEXGO HUB第一，ssc第二，其他按字母排序
+        // 自定义分组排序：NEXGO HUB第一，MPoC第二，ssc第三，其他按字母排序
         return groupNames.sort((a, b) => {
-            if (a === 'NEXGO HUB') return -1;
-            if (b === 'NEXGO HUB') return 1;
-            if (a === 'ssc') return b === 'NEXGO HUB' ? 1 : -1;
-            if (b === 'ssc') return a === 'NEXGO HUB' ? -1 : 1;
+            const priority = { 'NEXGO HUB': 1, 'MPoC': 2, 'ssc': 3 };
+            const aPriority = priority[a] || 999;
+            const bPriority = priority[b] || 999;
+
+            if (aPriority !== bPriority) {
+                return aPriority - bPriority;
+            }
             return a.localeCompare(b);
         });
     }
