@@ -1790,9 +1790,22 @@
             selectedProjects.add(projectId);
         }
 
-        renderProjects();
+        // 只更新当前项目的DOM状态，不重新渲染整个列表
+        const projectItem = document.querySelector(`.project-item[data-project-id="${projectId}"]`);
+        if (projectItem) {
+            const checkbox = projectItem.querySelector('.project-checkbox');
+            if (selectedProjects.has(projectId)) {
+                projectItem.classList.add('selected');
+                if (checkbox) checkbox.checked = true;
+            } else {
+                projectItem.classList.remove('selected');
+                if (checkbox) checkbox.checked = false;
+            }
+        }
+
         updateStats();
         updateButtonStates();
+        updateSelectedTags();
 
         if (selectedProjects.size > 0) {
             loadCommonBranches();
