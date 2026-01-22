@@ -4,6 +4,7 @@ node_modules/
 # Cloudflare
 .wrangler/
 .dev.vars
+wrangler.toml
 
 # Local database
 .mf/
