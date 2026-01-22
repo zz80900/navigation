@@ -1607,14 +1607,24 @@
                 console.log(`💾 项目数据已更新缓存，配置标识: ${configHash}，共 ${allProjects.length} 个项目`);
             }
 
-            // 初始化折叠状态：只展开重要分组（NEXGO HUB、MPoC、ssc），其他默认折叠
-            const importantGroups = ['NEXGO HUB', 'MPoC', 'ssc'];
-            const groupedProjects = groupProjectsByNamespace(allProjects);
-            Object.keys(groupedProjects).forEach(groupName => {
-                if (!importantGroups.includes(groupName)) {
-                    collapsedGroups.add(groupName);
-                }
-            });
+            // 初始化折叠状态：优先从localStorage恢复，否则使用默认规则
+            const savedCollapsedGroups = localStorage.getItem('collapsed-groups');
+            if (savedCollapsedGroups) {
+                // 恢复用户上次的折叠状态
+                collapsedGroups = new Set(JSON.parse(savedCollapsedGroups));
+                console.log('📦 恢复折叠状态:', Array.from(collapsedGroups));
+            } else {
+                // 首次加载：只展开重要分组（NEXGO HUB、MPoC、ssc），其他默认折叠
+                const importantGroups = ['NEXGO HUB', 'MPoC', 'ssc'];
+                const groupedProjects = groupProjectsByNamespace(allProjects);
+                collapsedGroups.clear();
+                Object.keys(groupedProjects).forEach(groupName => {
+                    if (!importantGroups.includes(groupName)) {
+                        collapsedGroups.add(groupName);
+                    }
+                });
+                console.log('🆕 使用默认折叠状态:', Array.from(collapsedGroups));
+            }
 
             renderProjects();
             updateStats();
@@ -1748,6 +1758,9 @@
         } else {
             collapsedGroups.add(groupName);
         }
+
+        // 保存折叠状态到localStorage
+        localStorage.setItem('collapsed-groups', JSON.stringify(Array.from(collapsedGroups)));
 
         // 更新UI
         const groupContent = document.getElementById(`group-${groupName.replace(/[^a-zA-Z0-9]/g, '-')}`);
